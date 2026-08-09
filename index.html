@@ -13,13 +13,7 @@
   <link
     rel="icon"
     type="image/x-icon"
-    href="https://envocc01.github.io/e-learning-envocc/favicon.ico?v=3"
-  >
-
-  <link
-    rel="shortcut icon"
-    type="image/x-icon"
-    href="https://envocc01.github.io/e-learning-envocc/favicon.ico?v=3"
+    href="./favicon.ico?v=3"
   >
 
   <style>
@@ -55,11 +49,13 @@
       'AKfycbyy-gCv5sJf3RUVksXg6HfDpVxmljuq5-LgxBDsHJ-OwXZMsE5fCXE0KXQHmRyZT1wS/' +
       'exec';
 
-    const APP_VERSION = '26';
+    const APP_VERSION = '27';
 
     const appFrame = document.getElementById(
       'envocc-app'
     );
+
+    let appWindow = null;
 
     function getRoute() {
       const hash = window.location.hash.replace(
@@ -89,33 +85,21 @@
       };
     }
 
-    function renderRoute() {
+    function sendRoute() {
+      if (!appWindow) {
+        return;
+      }
+
       const route = getRoute();
 
-      const destination =
-        route.page === 'course'
-          ? (
-            APP_URL +
-            '?course=' +
-            encodeURIComponent(route.slug) +
-            '&v=' +
-            APP_VERSION
-          )
-          : (
-            APP_URL +
-            '?v=' +
-            APP_VERSION
-          );
-
-      if (
-        appFrame.dataset.currentUrl !==
-        destination
-      ) {
-        appFrame.dataset.currentUrl =
-          destination;
-
-        appFrame.src = destination;
-      }
+      appWindow.postMessage(
+        {
+          type: 'envocc:route',
+          page: route.page,
+          slug: route.slug
+        },
+        '*'
+      );
     }
 
     window.addEventListener(
@@ -139,8 +123,23 @@
         if (
           !isGoogleApp ||
           !event.data ||
+          !event.data.type
+        ) {
+          return;
+        }
+
+        if (
+          event.data.type ===
+          'envocc:ready'
+        ) {
+          appWindow = event.source;
+          sendRoute();
+          return;
+        }
+
+        if (
           event.data.type !==
-            'envocc:navigate'
+          'envocc:navigate'
         ) {
           return;
         }
@@ -164,10 +163,13 @@
 
     window.addEventListener(
       'hashchange',
-      renderRoute
+      sendRoute
     );
 
-    renderRoute();
+    appFrame.src =
+      APP_URL +
+      '?v=' +
+      APP_VERSION;
   </script>
 </body>
 </html>
