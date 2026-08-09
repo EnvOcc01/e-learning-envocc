@@ -50,124 +50,124 @@
   ></iframe>
 
   <script>
-  const APP_URL =
-    'https://script.google.com/macros/s/' +
-    'AKfycbyy-gCv5sJf3RUVksXg6HfDpVxmljuq5-LgxBDsHJ-OwXZMsE5fCXE0KXQHmRyZT1wS/' +
-    'exec';
+    const APP_URL =
+      'https://script.google.com/macros/s/' +
+      'AKfycbyy-gCv5sJf3RUVksXg6HfDpVxmljuq5-LgxBDsHJ-OwXZMsE5fCXE0KXQHmRyZT1wS/' +
+      'exec';
 
-  const APP_VERSION = '24';
+    const APP_VERSION = '26';
 
-  const appFrame = document.getElementById(
-    'envocc-app'
-  );
-
-  function getRoute() {
-    const hash = window.location.hash.replace(
-      /^#\/?/,
-      ''
+    const appFrame = document.getElementById(
+      'envocc-app'
     );
 
-    const parts = hash
-      .split('/')
-      .filter(Boolean);
+    function getRoute() {
+      const hash = window.location.hash.replace(
+        /^#\/?/,
+        ''
+      );
 
-    if (
-      parts[0] === 'course' &&
-      parts[1]
-    ) {
+      const parts = hash
+        .split('/')
+        .filter(Boolean);
+
+      if (
+        parts[0] === 'course' &&
+        parts[1]
+      ) {
+        return {
+          page: 'course',
+          slug: decodeURIComponent(
+            parts.slice(1).join('/')
+          )
+        };
+      }
+
       return {
-        page: 'course',
-        slug: decodeURIComponent(
-          parts.slice(1).join('/')
-        )
+        page: 'home',
+        slug: ''
       };
     }
 
-    return {
-      page: 'home',
-      slug: ''
-    };
-  }
+    function renderRoute() {
+      const route = getRoute();
 
-  function renderRoute() {
-    const route = getRoute();
-
-    const destination =
-      route.page === 'course'
-        ? (
-          APP_URL +
-          '/' +
-          encodeURIComponent(route.slug) +
-          '?v=' +
-          APP_VERSION
-        )
-        : (
-          APP_URL +
-          '?v=' +
-          APP_VERSION
-        );
-
-    if (
-      appFrame.dataset.currentUrl !==
-      destination
-    ) {
-      appFrame.dataset.currentUrl =
-        destination;
-
-      appFrame.src = destination;
-    }
-  }
-
-  window.addEventListener(
-    'message',
-    function (event) {
-      let senderHost = '';
-
-      try {
-        senderHost =
-          new URL(event.origin).hostname;
-      } catch (error) {
-        return;
-      }
-
-      const isGoogleApp =
-        senderHost === 'script.google.com' ||
-        senderHost.endsWith(
-          '.googleusercontent.com'
-        );
-
-      if (
-        !isGoogleApp ||
-        !event.data ||
-        event.data.type !==
-          'envocc:navigate'
-      ) {
-        return;
-      }
-
-      if (
-        event.data.page === 'course' &&
-        event.data.slug
-      ) {
-        window.location.hash =
-          '/course/' +
-          encodeURIComponent(
-            event.data.slug
+      const destination =
+        route.page === 'course'
+          ? (
+            APP_URL +
+            '?course=' +
+            encodeURIComponent(route.slug) +
+            '&v=' +
+            APP_VERSION
+          )
+          : (
+            APP_URL +
+            '?v=' +
+            APP_VERSION
           );
 
-        return;
+      if (
+        appFrame.dataset.currentUrl !==
+        destination
+      ) {
+        appFrame.dataset.currentUrl =
+          destination;
+
+        appFrame.src = destination;
       }
-
-      window.location.hash = '/';
     }
-  );
 
-  window.addEventListener(
-    'hashchange',
-    renderRoute
-  );
+    window.addEventListener(
+      'message',
+      function (event) {
+        let senderHost = '';
 
-  renderRoute();
-</script>
+        try {
+          senderHost =
+            new URL(event.origin).hostname;
+        } catch (error) {
+          return;
+        }
+
+        const isGoogleApp =
+          senderHost === 'script.google.com' ||
+          senderHost.endsWith(
+            '.googleusercontent.com'
+          );
+
+        if (
+          !isGoogleApp ||
+          !event.data ||
+          event.data.type !==
+            'envocc:navigate'
+        ) {
+          return;
+        }
+
+        if (
+          event.data.page === 'course' &&
+          event.data.slug
+        ) {
+          window.location.hash =
+            '/course/' +
+            encodeURIComponent(
+              event.data.slug
+            );
+
+          return;
+        }
+
+        window.location.hash = '/';
+      }
+    );
+
+    window.addEventListener(
+      'hashchange',
+      renderRoute
+    );
+
+    renderRoute();
+  </script>
 </body>
 </html>
