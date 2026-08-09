@@ -50,102 +50,124 @@
   ></iframe>
 
   <script>
-    const APP_URL =
-      'https://script.google.com/macros/s/' +
-      'AKfycbyy-gCv5sJf3RUVksXg6HfDpVxmljuq5-LgxBDsHJ-OwXZMsE5fCXE0KXQHmRyZT1wS/' +
-      'exec';
+  const APP_URL =
+    'https://script.google.com/macros/s/' +
+    'AKfycbyy-gCv5sJf3RUVksXg6HfDpVxmljuq5-LgxBDsHJ-OwXZMsE5fCXE0KXQHmRyZT1wS/' +
+    'exec';
 
-    const appFrame = document.getElementById(
-      'envocc-app'
+  const APP_VERSION = '24';
+
+  const appFrame = document.getElementById(
+    'envocc-app'
+  );
+
+  function getRoute() {
+    const hash = window.location.hash.replace(
+      /^#\/?/,
+      ''
     );
 
-    function getRoute() {
-      const hash = window.location.hash.replace(
-        /^#\/?/,
-        ''
-      );
+    const parts = hash
+      .split('/')
+      .filter(Boolean);
 
-      const parts = hash
-        .split('/')
-        .filter(Boolean);
-
-      if (
-        parts[0] === 'course' &&
-        parts[1]
-      ) {
-        return {
-          page: 'course',
-          slug: decodeURIComponent(
-            parts.slice(1).join('/')
-          )
-        };
-      }
-
+    if (
+      parts[0] === 'course' &&
+      parts[1]
+    ) {
       return {
-        page: 'home',
-        slug: ''
+        page: 'course',
+        slug: decodeURIComponent(
+          parts.slice(1).join('/')
+        )
       };
     }
 
-    function renderRoute() {
-      const route = getRoute();
+    return {
+      page: 'home',
+      slug: ''
+    };
+  }
 
-      const destination =
-        route.page === 'course'
-          ? (
-            APP_URL +
-            '/' +
-            encodeURIComponent(route.slug)
-          )
-          : APP_URL;
+  function renderRoute() {
+    const route = getRoute();
+
+    const destination =
+      route.page === 'course'
+        ? (
+          APP_URL +
+          '/' +
+          encodeURIComponent(route.slug) +
+          '?v=' +
+          APP_VERSION
+        )
+        : (
+          APP_URL +
+          '?v=' +
+          APP_VERSION
+        );
+
+    if (
+      appFrame.dataset.currentUrl !==
+      destination
+    ) {
+      appFrame.dataset.currentUrl =
+        destination;
+
+      appFrame.src = destination;
+    }
+  }
+
+  window.addEventListener(
+    'message',
+    function (event) {
+      let senderHost = '';
+
+      try {
+        senderHost =
+          new URL(event.origin).hostname;
+      } catch (error) {
+        return;
+      }
+
+      const isGoogleApp =
+        senderHost === 'script.google.com' ||
+        senderHost.endsWith(
+          '.googleusercontent.com'
+        );
 
       if (
-        appFrame.dataset.currentUrl !==
-        destination
+        !isGoogleApp ||
+        !event.data ||
+        event.data.type !==
+          'envocc:navigate'
       ) {
-        appFrame.dataset.currentUrl =
-          destination;
-
-        appFrame.src = destination;
+        return;
       }
+
+      if (
+        event.data.page === 'course' &&
+        event.data.slug
+      ) {
+        window.location.hash =
+          '/course/' +
+          encodeURIComponent(
+            event.data.slug
+          );
+
+        return;
+      }
+
+      window.location.hash = '/';
     }
+  );
 
-    window.addEventListener(
-      'message',
-      function (event) {
-        if (
-          event.source !==
-            appFrame.contentWindow ||
-          !event.data ||
-          event.data.type !==
-            'envocc:navigate'
-        ) {
-          return;
-        }
+  window.addEventListener(
+    'hashchange',
+    renderRoute
+  );
 
-        if (
-          event.data.page === 'course' &&
-          event.data.slug
-        ) {
-          window.location.hash =
-            '/course/' +
-            encodeURIComponent(
-              event.data.slug
-            );
-
-          return;
-        }
-
-        window.location.hash = '/';
-      }
-    );
-
-    window.addEventListener(
-      'hashchange',
-      renderRoute
-    );
-
-    renderRoute();
-  </script>
+  renderRoute();
+</script>
 </body>
 </html>
